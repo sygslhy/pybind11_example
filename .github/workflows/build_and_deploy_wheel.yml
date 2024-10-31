@@ -41,6 +41,12 @@ jobs:
         run: python3 -m cibuildwheel --output-dir wheelhouse
         # to supply options, put them in 'env', like:
         env:
+          CIBW_BEFORE_ALL: >
+            git clone https://github.com/sygslhy/image-io-libs.git &&
+            mkdir -p image-io-libs/build &&
+            cd image-io-libs/build &&
+            cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=/usr/local &&
+            make install
           CIBW_BEFORE_BUILD: >
             echo $PATH
             ls /usr/local/bin
