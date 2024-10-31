@@ -1,0 +1,58 @@
+name: Build and upload to PyPI
+
+on: [push, pull_request]
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+        python_version: ['3.12']
+
+    steps:
+
+      - if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+        name: Remove firstly the installed libs from MacOS
+        run : |
+          brew install nasm
+          sudo rm -rf /Library/Frameworks/Mono.framework
+          brew uninstall --ignore-dependencies jpeg-turbo libpng libtiff
+
+      - name: Check out image-io
+        uses: actions/checkout@v4
+
+      # Used to host cibuildwheel
+      - name: Install Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - if: matrix.os == 'ubuntu-24.04'
+        name: Install cibuildwheel for Linux
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel pytest numpy
+          python3 -m pip install cibuildwheel==2.21.3
+
+      - if: matrix.os == 'ubuntu-24.04'
+        name: Build wheels for Linux
+        run: python3 -m cibuildwheel --output-dir wheelhouse
+        # to supply options, put them in 'env', like:
+        env:
+          CIBW_BEFORE_BUILD: >
+            echo $PATH
+            ls /usr/local/bin
+          CIBW_SKIP: pp*
+          CIBW_TEST_COMMAND: >
+            pwd
+            echo ${{github.workspace}}
+            cd ${{github.workspace}}
+            pytest -s
+          CIBW_BUILD_VERBOSITY: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl

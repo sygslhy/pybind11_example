@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -flto -shared  -o /home/ysun/pybind11_example/build/lib.linux-x86_64-cpython-312/cmake_example.cpython-312-x86_64-linux-gnu.so CMakeFiles/cmake_example.dir/src/main.cpp.o 
